@@ -26,7 +26,7 @@ public class DrawView extends View {
         path = new Path();
     }
 
-    
+
     //设置Paint的一些属性
     private void setupPaint(){
         paint = new Paint();
