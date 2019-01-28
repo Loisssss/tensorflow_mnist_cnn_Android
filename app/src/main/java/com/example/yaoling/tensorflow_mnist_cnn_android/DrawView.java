@@ -10,6 +10,8 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+
+
 //实现自定义视图
 public class DrawView extends View {
     //actual drawing
@@ -49,8 +51,9 @@ public class DrawView extends View {
         //确定motion的类型
         switch (motionEven.getAction()){
             //检测到用户按下屏幕于具体的x y坐标
-            case MotionEvent.ACTION_DOWN: path.moveTo(pointX, pointY);
-            break;
+            case MotionEvent.ACTION_DOWN:
+                path.moveTo(pointX, pointY);
+                break;
             // 在用户手触摸屏幕期间， 并且从x 移动到 y， 在x y之间画一条线
             case MotionEvent.ACTION_MOVE: path.lineTo(pointX, pointX);
             break;
@@ -79,5 +82,46 @@ public class DrawView extends View {
         canvas.drawBitmap(bitmap, 0, 0, paint);
         //画出路径, 看到用户实际正在绘制的图像
         canvas.drawPath(path, paint);
+    }
+
+    public void clearCanvas(){
+        //重置bitmap
+        bitmap.recycle();
+        //初始化bitmap
+        bitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+        //重置path
+        path = new Path();
+        //更新视图
+        invalidate();
+    }
+
+    //转换canvas 为bitmap, so that 转换为原始pixels然后喂给模型
+    private Bitmap getBitmap() {
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(Color.WHITE);
+        draw(canvas);
+        return Bitmap.createScaledBitmap(bitmap, canvas.getWidth(), canvas.getHeight(), false);
+
+    }
+
+    //转换bitmap为正确的model输入格式
+    public float[] getPixels() {
+        Bitmap bitmap = getBitmap();
+        // 计算 pixel的大小
+        int size = bitmap.getWidth() * bitmap.getHeight();
+        System.out.print(size);
+        int[] pixels = new int[size];
+        //检索pixels
+        bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+        //int转为float， 将其传递给model
+        float[] bitmapPixels = new float[pixels.length];
+        for (int i = 0; i < pixels.length; i++) {
+            //0（if white）； 255（if black）
+            int pixel = pixels[i];
+            int xor = pixel & 0xff;
+            //value between 0 and 1
+            bitmapPixels[i] = (float)((0xff - xor) / 255.0);
+        }
+        return bitmapPixels;
     }
 }
